@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Conheces a tua equipa? — DQAS</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#222;
+  --accent:#f5c518;--accent2:#e8421a;--text:#f0ede6;--muted:#888;
+  --green:#22c55e;--red:#ef4444;--blue:#3b82f6;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;text-align:center}
+.screen.active{display:flex}
+
+/* ── TYPOGRAPHY ── */
+.big{font-size:clamp(2.5rem,10vw,6rem);font-weight:900;line-height:0.95;letter-spacing:-0.02em}
+.big span{color:var(--accent)}
+.tag{font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);border:1.5px solid var(--accent);padding:4px 14px;border-radius:2px;display:inline-block;margin-bottom:1.5rem}
+.sub{font-size:0.95rem;color:var(--muted);max-width:360px;line-height:1.65;margin-top:1rem}
+
+/* ── BUTTONS ── */
+.btn{font-family:inherit;font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:13px 32px;border:none;cursor:pointer;border-radius:2px;transition:transform 0.15s,opacity 0.15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{opacity:0.88;transform:translateY(-1px)}
+.btn-secondary{background:transparent;color:var(--muted);border:1px solid #333}
+.btn-secondary:hover{border-color:var(--muted);color:var(--text)}
+.btn:disabled{opacity:0.4;cursor:default;transform:none}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:1.5rem}
+
+/* ── MODE SELECT ── */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:480px;margin:1.5rem 0}
+.mode-card{background:var(--surface);border:1.5px solid #2a2a2a;border-radius:10px;padding:1.4rem 1rem;cursor:pointer;transition:border-color 0.2s,background 0.2s;text-align:left}
+.mode-card:hover{border-color:#444}
+.mode-card.selected{border-color:var(--accent);background:#1a1500}
+.mode-icon{font-size:1.8rem;margin-bottom:0.6rem}
+.mode-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:0.3rem}
+.mode-desc{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ── NAME INPUT ── */
+.name-input-wrap{width:100%;max-width:360px;margin:1.5rem 0}
+.name-input{width:100%;background:var(--surface);border:1.5px solid #333;color:var(--text);font-family:inherit;font-size:1.1rem;font-weight:600;text-align:center;padding:14px 20px;border-radius:8px;outline:none;transition:border-color 0.2s}
+.name-input:focus{border-color:var(--accent)}
+.name-input::placeholder{color:#444;font-weight:400}
+
+/* ── WAITING ── */
+.players-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:500px;margin:1.5rem 0}
+.player-chip{background:var(--surface);border:1px solid #2a2a2a;border-radius:100px;padding:6px 16px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px}
+.player-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.waiting-count{font-size:0.85rem;color:var(--muted);margin-top:0.5rem}
+
+/* ── QUIZ PLAYER (telemóvel) ── */
+#player-quiz{padding:1rem;align-items:stretch;justify-content:flex-start}
+.pq-top{display:flex;align-items:center;gap:10px;margin-bottom:1.2rem}
+.pq-progress{flex:1;height:3px;background:#222;border-radius:2px;overflow:hidden}
+.pq-fill{height:100%;background:var(--accent);transition:width 0.4s}
+.pq-num{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+.pq-timer{font-size:1.6rem;font-weight:900;color:var(--accent);min-width:32px;text-align:right;line-height:1}
+.pq-cat{font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent2);margin-bottom:0.5rem}
+.pq-q{font-size:1.25rem;font-weight:700;line-height:1.3;margin-bottom:1.5rem;color:var(--text)}
+.names-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.name-btn{background:var(--surface);border:1.5px solid #2a2a2a;color:var(--text);font-family:inherit;font-size:13px;font-weight:600;padding:12px 8px;border-radius:8px;cursor:pointer;text-align:center;transition:all 0.15s;line-height:1.3}
+.name-btn:active{transform:scale(0.97)}
+.name-btn.selected{border-color:var(--accent);background:#1a1500;color:var(--accent)}
+.name-btn.correct{border-color:var(--green);background:#052e16;color:var(--green)}
+.name-btn.wrong{border-color:var(--red);background:#2d0a0a;color:var(--red)}
+.name-btn:disabled{cursor:default}
+.voted-msg{background:var(--surface);border:1px solid #2a2a2a;border-radius:8px;padding:1.2rem;margin-top:1rem;font-size:0.9rem;color:var(--muted);line-height:1.5}
+.voted-msg strong{color:var(--accent);display:block;font-size:1rem;margin-bottom:0.3rem}
+
+/* ── HOST SCREEN ── */
+#host-quiz{padding:1.5rem;align-items:stretch;justify-content:flex-start;text-align:left}
+.host-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.host-title{font-size:0.9rem;font-weight:700;color:var(--muted)}
+.host-progress{display:flex;align-items:center;gap:10px}
+.host-bar{width:200px;height:4px;background:#222;border-radius:2px;overflow:hidden}
+.host-fill{height:100%;background:var(--accent);transition:width 0.4s}
+.host-counter{font-size:12px;color:var(--muted)}
+.host-timer-big{font-size:4rem;font-weight:900;color:var(--accent);line-height:1;text-align:center;margin:0.5rem 0}
+.host-cat{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent2);margin-bottom:0.5rem}
+.host-q{font-size:1.8rem;font-weight:700;line-height:1.2;margin-bottom:1.5rem;color:var(--text)}
+.votes-area{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:1.5rem}
+.vote-card{background:var(--surface);border:1px solid #2a2a2a;border-radius:8px;padding:0.8rem 1rem;display:flex;align-items:center;gap:10px}
+.vote-name{font-size:13px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vote-bar-wrap{flex:2;height:6px;background:#222;border-radius:3px;overflow:hidden}
+.vote-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.5s}
+.vote-pct{font-size:12px;font-weight:700;color:var(--accent);min-width:32px;text-align:right}
+.vote-count-badge{font-size:11px;color:var(--muted)}
+.reveal-panel{background:var(--surface);border:1px solid #2a2a2a;border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1rem;display:none}
+.reveal-panel.show{display:block}
+.reveal-label{font-size:10px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem}
+.reveal-text{font-size:0.92rem;color:var(--text);line-height:1.6;margin-bottom:0.4rem}
+.reveal-tip{font-size:0.82rem;color:var(--muted);font-style:italic;line-height:1.5}
+.host-actions{display:flex;gap:10px;flex-wrap:wrap}
+.players-joined{font-size:12px;color:var(--muted);margin-bottom:0.5rem}
+
+/* ── RESULTS ── */
+.ranking-list{width:100%;max-width:500px;display:flex;flex-direction:column;gap:8px;margin:1.5rem 0}
+.rank-item{background:var(--surface);border:1px solid #2a2a2a;border-radius:10px;padding:0.9rem 1.2rem;display:flex;align-items:center;gap:1rem;animation:slideUp 0.35s ease both}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.rank-item:nth-child(1){border-color:var(--accent);background:#1a1500}
+.rank-pos{font-size:1.6rem;font-weight:900;color:var(--muted);min-width:36px}
+.rank-item:nth-child(1) .rank-pos{color:var(--accent)}
+.rank-name{font-size:0.95rem;font-weight:600;flex:1}
+.rank-score{font-size:1.4rem;font-weight:900}
+
+/* ── LOBBY CODE ── */
+.code-box{background:var(--surface);border:2px solid var(--accent);border-radius:12px;padding:1.5rem 2.5rem;margin:1rem 0}
+.code-label{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem}
+.code-val{font-size:3rem;font-weight:900;color:var(--accent);letter-spacing:0.15em;font-variant-numeric:tabular-nums}
+.code-url{font-size:12px;color:var(--muted);margin-top:0.5rem;word-break:break-all}
+
+/* ── SPINNER ── */
+.spinner{width:32px;height:32px;border:3px solid #333;border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:1rem auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── STATUS BAR ── */
+.status-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface2);border-top:1px solid #2a2a2a;padding:8px 16px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;z-index:100}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px}
+.status-dot.off{background:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- ═══ COVER ═══ -->
+<div class="screen active" id="cover">
+  <div class="tag">Dinâmica de Equipa · DQAS</div>
+  <div class="big">Conheces<br>a tua<br><span>equipa?</span></div>
+  <p class="sub">Quiz em tempo real. Cada pessoa responde no seu telemóvel.</p>
+  <div class="mode-grid">
+    <div class="mode-card selected" id="modeHost" onclick="selectMode('host')">
+      <div class="mode-icon">📺</div>
+      <div class="mode-title">Sou a facilitadora</div>
+      <div class="mode-desc">Projeto o ecrã principal e controlo o quiz</div>
+    </div>
+    <div class="mode-card" id="modePlayer" onclick="selectMode('player')">
+      <div class="mode-icon">📱</div>
+      <div class="mode-title">Sou participante</div>
+      <div class="mode-desc">Respondo no meu telemóvel</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="startMode()">Continuar →</button>
+  </div>
+</div>
+
+<!-- ═══ HOST SETUP ═══ -->
+<div class="screen" id="host-setup">
+  <div class="tag">Facilitadora</div>
+  <div class="big" style="font-size:clamp(1.8rem,6vw,3.5rem)">A tua<br><span>sessão</span></div>
+  <div class="code-box" id="hostCodeBox">
+    <div class="code-label">Código da sessão</div>
+    <div class="code-val" id="hostCode">——</div>
+    <div class="code-url">Partilha este link: <span id="hostUrl" style="color:var(--accent)"></span></div>
+  </div>
+  <div class="players-joined" id="hostJoinedCount">0 participantes ligados</div>
+  <div class="players-list" id="hostPlayersList"></div>
+  <p class="sub" style="margin-top:0.5rem">Quando toda a gente estiver ligada, clica em iniciar.</p>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('cover')">← Voltar</button>
+    <button class="btn btn-primary" id="btnStartQuiz" onclick="hostStartQuiz()" disabled>Iniciar quiz →</button>
+  </div>
+</div>
+
+<!-- ═══ PLAYER JOIN ═══ -->
+<div class="screen" id="player-join">
+  <div class="tag">Participante</div>
+  <div class="big" style="font-size:clamp(1.8rem,6vw,3rem)">Entra<br><span>no jogo</span></div>
+  <div class="name-input-wrap">
+    <input class="name-input" id="playerName" placeholder="O teu nome" maxlength="30" list="namesList">
+    <datalist id="namesList">
+      <option value="Cláudia Rodrigues">
+      <option value="Mónica Epifânio">
+      <option value="André Reis">
+      <option value="Sónia Dimas">
+      <option value="Isabel Esteves">
+      <option value="Joana Delgado">
+      <option value="David Brandão">
+      <option value="Vânia Carranca">
+      <option value="Alexandra Xavier">
+      <option value="Otniel Luís">
+      <option value="André Martins">
+      <option value="Rui Raposo">
+      <option value="Emanuel Cibrão">
+      <option value="Diogo Pacheco">
+    </datalist>
+  </div>
+  <div class="name-input-wrap" style="margin-top:0">
+    <input class="name-input" id="sessionCode" placeholder="Código da sessão (6 letras)" maxlength="6" style="text-transform:uppercase;letter-spacing:0.2em">
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goTo('cover')">← Voltar</button>
+    <button class="btn btn-primary" onclick="playerJoin()">Entrar →</button>
+  </div>
+  <p id="joinError" style="color:var(--red);font-size:13px;margin-top:0.8rem;display:none"></p>
+</div>
+
+<!-- ═══ PLAYER WAITING ═══ -->
+<div class="screen" id="player-waiting">
+  <div class="tag">Sala de espera</div>
+  <div class="spinner"></div>
+  <p style="color:var(--muted);font-size:0.9rem;margin-top:0.5rem">À espera que a facilitadora inicie...</p>
+  <div class="players-list" id="waitingPlayersList" style="margin-top:1.5rem"></div>
+</div>
+
+<!-- ═══ PLAYER QUIZ ═══ -->
+<div class="screen" id="player-quiz">
+  <div class="pq-top">
+    <span class="pq-num" id="pqNum">1/15</span>
+    <div class="pq-progress"><div class="pq-fill" id="pqFill" style="width:0%"></div></div>
+    <span class="pq-timer" id="pqTimer">30</span>
+  </div>
+  <div class="pq-cat" id="pqCat"></div>
+  <div class="pq-q" id="pqQ"></div>
+  <div class="names-grid" id="pqNames"></div>
+  <div class="voted-msg" id="votedMsg" style="display:none">
+    <strong id="votedName"></strong>
+    <span id="votedWait">Aguarda os resultados...</span>
+  </div>
+</div>
+
+<!-- ═══ HOST QUIZ ═══ -->
+<div class="screen" id="host-quiz">
+  <div class="host-top">
+    <span class="host-title">Conheces a tua equipa?</span>
+    <div class="host-progress">
+      <div class="host-bar"><div class="host-fill" id="hostFill" style="width:0%"></div></div>
+      <span class="host-counter" id="hostCounter">1/15</span>
+    </div>
+    <span class="host-timer-big" id="hostTimer">30</span>
+  </div>
+  <div class="players-joined" id="hostVoteCount">0 votos recebidos</div>
+  <div class="host-cat" id="hostCat"></div>
+  <div class="host-q" id="hostQ"></div>
+  <div class="votes-area" id="hostVotesArea"></div>
+  <div class="reveal-panel" id="revealPanel">
+    <div class="reveal-label">Para reflexão</div>
+    <div class="reveal-text" id="revealText"></div>
+    <div class="reveal-tip" id="revealTip"></div>
+  </div>
+  <div class="host-actions">
+    <button class="btn btn-secondary" id="btnReveal" onclick="hostReveal()" style="display:none">Mostrar reflexão</button>
+    <button class="btn btn-primary" id="btnNextQ" onclick="hostNext()" style="display:none">Próxima →</button>
+  </div>
+</div>
+
+<!-- ═══ PLAYER RESULT ═══ -->
+<div class="screen" id="player-result">
+  <div class="tag">Fim do jogo</div>
+  <div class="big" style="font-size:clamp(2rem,8vw,4rem)">Obrigada<br><span>por jogar!</span></div>
+  <p class="sub">O ranking aparece no ecrã principal.</p>
+</div>
+
+<!-- ═══ HOST RESULT ═══ -->
+<div class="screen" id="host-result">
+  <div class="tag">Resultado Final</div>
+  <div class="big" style="font-size:clamp(2rem,8vw,4rem)">Ranking<br><span>Final</span></div>
+  <div class="ranking-list" id="rankingList"></div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="location.reload()">↺ Nova sessão</button>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <span><span class="status-dot" id="statusDot"></span><span id="statusText">A ligar...</span></span>
+  <span id="statusMode"></span>
+</div>
+
+<script>
+const QUESTIONS = [
+  {cat:"Hábitos",    q:"Quem costuma ser o primeiro a chegar?",                              reveal:"Cada equipa tem o seu madrugador. E toda a gente sabe quem é — mesmo que nunca se diga.",tip:"Pergunta: 'Isso é hábito ou necessidade?'"},
+  {cat:"Hábitos",    q:"Quem demora mais a responder ao email?",                             reveal:"O tempo de resposta revela como cada um gere prioridades — e não é necessariamente mau sinal.",tip:"Pergunta: 'O que consideramos tempo aceitável para responder?'"},
+  {cat:"Hábitos",    q:"Quem é mais provável estar a trabalhar ao fim de semana?",           reveal:"Fronteiras digitais são cada vez mais difíceis de manter — e cada vez mais importantes.",tip:"Pergunta: 'Isso é uma escolha ou uma necessidade?'"},
+  {cat:"Personalidade",q:"Quem reage melhor quando há uma mudança de última hora?",         reveal:"Adaptabilidade é uma das competências mais valorizadas — e mais raras.",tip:"Pergunta: 'Como podemos apoiar quem reage pior a mudanças?'"},
+  {cat:"Personalidade",q:"Quem é mais provável discordar abertamente numa reunião?",        reveal:"Ter alguém que discorda abertamente é um ativo — evita o pensamento de grupo.",tip:"Pergunta: 'Toda a gente se sente à vontade para discordar?'"},
+  {cat:"Personalidade",q:"Quem prefere trabalhar de forma mais autónoma?",                  reveal:"Introversão e autonomia não são o mesmo que falta de espírito de equipa.",tip:"Pergunta: 'Como distribuímos tarefas tendo isto em conta?'"},
+  {cat:"Situações",  q:"Se houver um erro num relatório já enviado, quem age mais rápido?", reveal:"Quem age rápido num erro não é quem errou menos — é quem tem mais sentido de responsabilidade.",tip:"Pergunta: 'Assumir um erro é seguro nesta equipa?'"},
+  {cat:"Situações",  q:"Quem costuma quebrar o silêncio numa reunião difícil?",             reveal:"Quebrar o silêncio exige coragem. Quem o faz regularmente está a fazer um serviço à equipa.",tip:"Pergunta: 'Quem raramente fala — e porquê?'"},
+  {cat:"Situações",  q:"Se um prazo não vai ser cumprido, quem comunica logo?",             reveal:"Comunicar um problema a tempo é sempre melhor do que gerir uma surpresa.",tip:"Pergunta: 'O que nos impede de comunicar mais cedo?'"},
+  {cat:"Equipa",     q:"Quem pede ajuda mais facilmente quando está sobrecarregado?",       reveal:"Pedir ajuda exige confiança no ambiente. Se alguém raramente pede — o problema pode ser o ambiente.",tip:"Pergunta: 'É fácil dizer nesta equipa: preciso de ajuda?'"},
+  {cat:"Equipa",     q:"Quem reconhece o trabalho dos outros com mais frequência?",         reveal:"Reconhecimento frequente e genuíno é um dos fatores que mais impacta a satisfação no trabalho.",tip:"Pergunta: 'Quando foi a última vez que dissemos a um colega que o trabalho ficou bem?'"},
+  {cat:"Equipa",     q:"Quem é a pessoa-recurso quando há um problema difícil de resolver?",reveal:"Em todas as equipas há pessoas-recurso informais. Reconhecê-las é o primeiro passo para valorizar esse papel.",tip:"Pergunta: 'Essa pessoa sente que o seu contributo é reconhecido?'"},
+  {cat:"Leveza",     q:"Quem alivia a tensão com humor nos momentos difíceis?",             reveal:"Humor em momentos difíceis é uma competência social subvalorizada.",tip:"Pergunta: 'Uma equipa que nunca ri em momentos difíceis está a acumular tensão?'"},
+  {cat:"Leveza",     q:"Quem é mais difícil de convencer a mudar de opinião?",              reveal:"Ser difícil de convencer pode ser teimosia — ou pode ser solidez. Depende do contexto.",tip:"Pergunta: 'E quem muda de opinião mais facilmente? Isso também tem valor.'"},
+  {cat:"Leveza",     q:"Quem seria o melhor líder se houvesse uma eleição hoje?",           reveal:"Liderança informal e liderança formal nem sempre coincidem. Quando coincidem, é um bom sinal.",tip:"Pergunta: 'Que qualidade a equipa mais valoriza num líder?'"},
+];
+
+const PLAYERS_LIST = ["Cláudia Rodrigues","Mónica Epifânio","André Reis","Sónia Dimas","Isabel Esteves","Joana Delgado","David Brandão","Vânia Carranca","Alexandra Xavier","Otniel Luís","André Martins","Rui Raposo","Emanuel Cibrão","Diogo Pacheco"];
+
+// ── STATE ──
+let mode = 'host';
+let sessionCode = '';
+let myName = '';
+let isHost = false;
+let currentQ = 0;
+let timer = null;
+let timeLeft = 30;
+let hasVoted = false;
+let pollInterval = null;
+
+// ── SHARED STORAGE via Claude API ──
+// Uses the Artifacts persistent storage API (window.storage)
+// Key schema:
+//   session:{code}          → {players:[], status:'lobby'|'playing'|'done', currentQ:0, started:false}
+//   votes:{code}:{qIdx}     → {name: count, ...}
+//   advance:{code}          → {q: number, ts: number}  (host signals next question)
+
+async function storeSet(key, val, shared=true) {
+  try { await window.storage.set(key, JSON.stringify(val), shared); } catch(e) {}
+}
+async function storeGet(key, shared=true) {
+  try {
+    const r = await window.storage.get(key, shared);
+    return r ? JSON.parse(r.value) : null;
+  } catch(e) { return null; }
+}
+
+// ── HELPERS ──
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('statusMode').textContent = isHost ? '📺 Facilitadora' : myName ? '📱 ' + myName.split(' ')[0] : '';
+}
+
+function setStatus(on, text) {
+  document.getElementById('statusDot').className = 'status-dot' + (on ? '' : ' off');
+  document.getElementById('statusText').textContent = text;
+}
+
+function genCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+function selectMode(m) {
+  mode = m;
+  document.getElementById('modeHost').classList.toggle('selected', m==='host');
+  document.getElementById('modePlayer').classList.toggle('selected', m==='player');
+}
+
+function startMode() {
+  if (mode === 'host') {
+    isHost = true;
+    setupHost();
+  } else {
+    isHost = false;
+    goTo('player-join');
+  }
+}
+
+// ── HOST SETUP ──
+async function setupHost() {
+  sessionCode = genCode();
+  const url = window.location.href.split('?')[0] + '?join=' + sessionCode;
+  document.getElementById('hostCode').textContent = sessionCode;
+  document.getElementById('hostUrl').textContent = url;
+  await storeSet('session:' + sessionCode, { players: [], status: 'lobby', currentQ: 0 });
+  goTo('host-setup');
+  setStatus(true, 'Sessão criada · ' + sessionCode);
+  pollHostLobby();
+}
+
+function pollHostLobby() {
+  clearInterval(pollInterval);
+  pollInterval = setInterval(async () => {
+    const sess = await storeGet('session:' + sessionCode);
+    if (!sess) return;
+    const players = sess.players || [];
+    document.getElementById('hostJoinedCount').textContent = players.length + ' participante' + (players.length !== 1 ? 's' : '') + ' ligado' + (players.length !== 1 ? 's' : '');
+    const list = document.getElementById('hostPlayersList');
+    list.innerHTML = players.map(p => `<div class="player-chip"><span class="player-dot"></span>${p}</div>`).join('');
+    document.getElementById('btnStartQuiz').disabled = players.length < 1;
+  }, 2000);
+}
+
+async function hostStartQuiz() {
+  clearInterval(pollInterval);
+  const sess = await storeGet('session:' + sessionCode);
+  sess.status = 'playing';
+  sess.currentQ = 0;
+  await storeSet('session:' + sessionCode, sess);
+  await storeSet('advance:' + sessionCode, { q: 0, ts: Date.now() });
+  currentQ = 0;
+  goTo('host-quiz');
+  renderHostQuestion();
+  startHostTimer();
+  pollHostVotes();
+}
+
+// ── HOST QUIZ ──
+function renderHostQuestion() {
+  hasVoted = false;
+  const q = QUESTIONS[currentQ];
+  const total = QUESTIONS.length;
+  document.getElementById('hostFill').style.width = ((currentQ+1)/total*100) + '%';
+  document.getElementById('hostCounter').textContent = (currentQ+1) + '/' + total;
+  document.getElementById('hostCat').textContent = q.cat;
+  document.getElementById('hostQ').textContent = q.q;
+  document.getElementById('hostVoteCount').textContent = '0 votos recebidos';
+  document.getElementById('revealPanel').classList.remove('show');
+  document.getElementById('btnReveal').style.display = 'none';
+  document.getElementById('btnNextQ').style.display = 'none';
+
+  // Build votes area
+  const area = document.getElementById('hostVotesArea');
+  area.innerHTML = PLAYERS_LIST.map(name => `
+    <div class="vote-card" id="vc-${name.replace(/\s/g,'_')}">
+      <span class="vote-name">${name.split(' ')[0]}</span>
+      <div class="vote-bar-wrap"><div class="vote-bar-fill" id="vb-${name.replace(/\s/g,'_')}" style="width:0%"></div></div>
+      <span class="vote-pct" id="vp-${name.replace(/\s/g,'_')}">0%</span>
+    </div>
+  `).join('');
+}
+
+function startHostTimer() {
+  timeLeft = 30;
+  document.getElementById('hostTimer').textContent = timeLeft;
+  clearInterval(timer);
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('hostTimer').textContent = timeLeft;
+    document.getElementById('hostTimer').style.color = timeLeft <= 5 ? 'var(--red)' : 'var(--accent)';
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      closeHostVoting();
+    }
+  }, 1000);
+}
+
+function pollHostVotes() {
+  clearInterval(pollInterval);
+  pollInterval = setInterval(async () => {
+    const votes = await storeGet('votes:' + sessionCode + ':' + currentQ);
+    if (!votes) return;
+    const total = Object.values(votes).reduce((a,b)=>a+b, 0);
+    document.getElementById('hostVoteCount').textContent = total + ' voto' + (total !== 1 ? 's' : '') + ' recebido' + (total !== 1 ? 's' : '');
+    PLAYERS_LIST.forEach(name => {
+      const key = name.replace(/\s/g,'_');
+      const count = votes[name] || 0;
+      const pct = total > 0 ? Math.round(count/total*100) : 0;
+      const bar = document.getElementById('vb-' + key);
+      const pctEl = document.getElementById('vp-' + key);
+      if (bar) bar.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = pct + '%';
+    });
+  }, 1500);
+}
+
+function closeHostVoting() {
+  clearInterval(timer);
+  clearInterval(pollInterval);
+  const q = QUESTIONS[currentQ];
+  document.getElementById('revealText').textContent = q.reveal;
+  document.getElementById('revealTip').textContent = q.tip;
+  document.getElementById('revealPanel').classList.add('show');
+  document.getElementById('btnReveal').style.display = 'inline-block';
+  document.getElementById('btnNextQ').style.display = 'inline-block';
+}
+
+function hostReveal() {
+  document.getElementById('revealPanel').classList.add('show');
+}
+
+async function hostNext() {
+  currentQ++;
+  if (currentQ >= QUESTIONS.length) {
+    await finishGame();
+    return;
+  }
+  await storeSet('advance:' + sessionCode, { q: currentQ, ts: Date.now() });
+  renderHostQuestion();
+  startHostTimer();
+  pollHostVotes();
+}
+
+async function finishGame() {
+  clearInterval(timer);
+  clearInterval(pollInterval);
+  const sess = await storeGet('session:' + sessionCode);
+  if (sess) { sess.status = 'done'; await storeSet('session:' + sessionCode, sess); }
+
+  // Tally scores
+  const scores = {};
+  PLAYERS_LIST.forEach(p => scores[p] = 0);
+  for (let qi = 0; qi < QUESTIONS.length; qi++) {
+    const votes = await storeGet('votes:' + sessionCode + ':' + qi);
+    if (!votes) continue;
+    const total = Object.values(votes).reduce((a,b)=>a+b,0);
+    if (total === 0) continue;
+    const max = Math.max(...Object.values(votes));
+    Object.entries(votes).forEach(([name, count]) => {
+      if (count === max) scores[name] = (scores[name]||0) + 100;
+    });
+  }
+
+  const sorted = Object.entries(scores).sort((a,b)=>b[1]-a[1]).filter(e=>e[1]>0).slice(0,10);
+  const medals = ['🥇','🥈','🥉'];
+  const list = document.getElementById('rankingList');
+  list.innerHTML = sorted.map(([name, pts], i) => `
+    <div class="rank-item" style="animation-delay:${i*0.1}s">
+      <div class="rank-pos">${medals[i]||'#'+(i+1)}</div>
+      <div class="rank-name">${name}</div>
+      <div class="rank-score" style="color:${i===0?'var(--accent)':'var(--text)'}">${pts}</div>
+    </div>
+  `).join('');
+  goTo('host-result');
+}
+
+// ── PLAYER JOIN ──
+async function playerJoin() {
+  const name = document.getElementById('playerName').value.trim();
+  const code = document.getElementById('sessionCode').value.trim().toUpperCase();
+  const errEl = document.getElementById('joinError');
+
+  if (!name) { errEl.textContent = 'Escreve o teu nome.'; errEl.style.display='block'; return; }
+  if (!code || code.length < 6) { errEl.textContent = 'Introduz o código de 6 letras.'; errEl.style.display='block'; return; }
+  errEl.style.display = 'none';
+
+  const sess = await storeGet('session:' + code);
+  if (!sess) { errEl.textContent = 'Sessão não encontrada. Verifica o código.'; errEl.style.display='block'; return; }
+  if (sess.status === 'done') { errEl.textContent = 'Esta sessão já terminou.'; errEl.style.display='block'; return; }
+
+  myName = name;
+  sessionCode = code;
+  const players = sess.players || [];
+  if (!players.includes(name)) players.push(name);
+  sess.players = players;
+  await storeSet('session:' + code, sess);
+
+  goTo('player-waiting');
+  setStatus(true, 'Ligado · ' + code);
+  pollForStart();
+}
+
+function pollForStart() {
+  clearInterval(pollInterval);
+  let lastQ = -1;
+  pollInterval = setInterval(async () => {
+    const adv = await storeGet('advance:' + sessionCode);
+    const sess = await storeGet('session:' + sessionCode);
+
+    // Update waiting list
+    if (sess && sess.players) {
+      const wl = document.getElementById('waitingPlayersList');
+      wl.innerHTML = sess.players.map(p => `<div class="player-chip"><span class="player-dot"></span>${p}</div>`).join('');
+    }
+
+    if (!adv) return;
+    if (sess && sess.status === 'done') { goTo('player-result'); clearInterval(pollInterval); return; }
+    if (adv.q !== lastQ) {
+      lastQ = adv.q;
+      currentQ = adv.q;
+      hasVoted = false;
+      renderPlayerQuestion();
+      startPlayerTimer();
+      goTo('player-quiz');
+    }
+  }, 2000);
+}
+
+// ── PLAYER QUIZ ──
+function renderPlayerQuestion() {
+  hasVoted = false;
+  const q = QUESTIONS[currentQ];
+  const total = QUESTIONS.length;
+  document.getElementById('pqFill').style.width = ((currentQ+1)/total*100) + '%';
+  document.getElementById('pqNum').textContent = (currentQ+1) + '/' + total;
+  document.getElementById('pqCat').textContent = q.cat;
+  document.getElementById('pqQ').textContent = q.q;
+  document.getElementById('votedMsg').style.display = 'none';
+
+  const grid = document.getElementById('pqNames');
+  grid.innerHTML = PLAYERS_LIST.map(name => `
+    <button class="name-btn" onclick="playerVote('${name.replace(/'/g,"\\'")}', this)">${name.split(' ')[0]}<br><small style="font-weight:400;font-size:10px;opacity:0.6">${name.split(' ').slice(1).join(' ')}</small></button>
+  `).join('');
+}
+
+function startPlayerTimer() {
+  timeLeft = 30;
+  document.getElementById('pqTimer').textContent = timeLeft;
+  clearInterval(timer);
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById('pqTimer').textContent = timeLeft;
+    document.getElementById('pqTimer').style.color = timeLeft <= 5 ? 'var(--red)' : 'var(--accent)';
+    if (timeLeft <= 0) { clearInterval(timer); lockPlayerVoting(); }
+  }, 1000);
+}
+
+async function playerVote(name, btn) {
+  if (hasVoted) return;
+  hasVoted = true;
+  clearInterval(timer);
+
+  document.querySelectorAll('.name-btn').forEach(b => { b.disabled = true; b.classList.remove('selected'); });
+  btn.classList.add('selected');
+
+  const key = 'votes:' + sessionCode + ':' + currentQ;
+  let votes = await storeGet(key) || {};
+  votes[name] = (votes[name] || 0) + 1;
+  await storeSet(key, votes);
+
+  document.getElementById('votedMsg').style.display = 'block';
+  document.getElementById('votedName').textContent = name.split(' ')[0];
+  document.getElementById('votedWait').textContent = 'Voto registado! Aguarda os resultados...';
+
+  pollForNextQ();
+}
+
+function lockPlayerVoting() {
+  if (hasVoted) return;
+  hasVoted = true;
+  document.querySelectorAll('.name-btn').forEach(b => b.disabled = true);
+  document.getElementById('votedMsg').style.display = 'block';
+  document.getElementById('votedName').textContent = 'Tempo esgotado';
+  document.getElementById('votedWait').textContent = 'Aguarda a próxima pergunta...';
+  pollForNextQ();
+}
+
+function pollForNextQ() {
+  let lastQ = currentQ;
+  const iv = setInterval(async () => {
+    const adv = await storeGet('advance:' + sessionCode);
+    const sess = await storeGet('session:' + sessionCode);
+    if (sess && sess.status === 'done') { goTo('player-result'); clearInterval(iv); return; }
+    if (adv && adv.q !== lastQ) {
+      lastQ = adv.q;
+      currentQ = adv.q;
+      hasVoted = false;
+      renderPlayerQuestion();
+      startPlayerTimer();
+      clearInterval(iv);
+    }
+  }, 2000);
+}
+
+// ── AUTO JOIN FROM URL ──
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  const joinCode = params.get('join');
+  if (joinCode) {
+    selectMode('player');
+    document.getElementById('sessionCode').value = joinCode.toUpperCase();
+    goTo('player-join');
+    setStatus(false, 'Introduz o teu nome');
+  } else {
+    setStatus(true, 'Pronto');
+  }
+});
+</script>
+</body>
+</html>
